@@ -17,6 +17,8 @@
     --success-bg: #f0faf4; --success-border: #4caf80; --success-text: #1a5c38;
     --warning-bg: #fffbeb; --warning-border: #f59e0b; --warning-text: #854d0e;
     --danger-bg: #fff5f5; --danger-border: #f87171; --danger-text: #991b1b;
+    --info-bg: #eff6ff; --info-border: #93c5fd; --info-text: #1d4ed8;
+    --soft-danger-bg: #fef2f2; --soft-danger-border: #fca5a5; --soft-danger-text: #b91c1c;
     --radius: 16px; --radius-sm: 10px; --shadow: 0 4px 24px rgba(18,8,0,0.10);
   }
   html, body { min-height: 100vh; background: var(--off-white); font-family: 'DM Sans', sans-serif; color: var(--text-primary); }
@@ -80,9 +82,11 @@
   .status-body { flex: 1; }
   .status-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
   .status-desc { font-size: 13px; line-height: 1.6; }
-  .status-success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); }
-  .status-warning { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); }
-  .status-danger  { background: var(--danger-bg);  border: 1px solid var(--danger-border);  color: var(--danger-text); }
+  .status-success      { background: var(--success-bg);      border: 1px solid var(--success-border);      color: var(--success-text); }
+  .status-warning      { background: var(--warning-bg);      border: 1px solid var(--warning-border);      color: var(--warning-text); }
+  .status-danger       { background: var(--danger-bg);       border: 1px solid var(--danger-border);       color: var(--danger-text); }
+  .status-info         { background: var(--info-bg);         border: 1px solid var(--info-border);         color: var(--info-text); }
+  .status-soft-danger  { background: var(--soft-danger-bg);  border: 1px solid var(--soft-danger-border);  color: var(--soft-danger-text); }
 
   /* DAY CHIPS */
   .days-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
@@ -107,8 +111,10 @@
   .divider { border: none; border-top: 1px solid var(--border-light); margin: 18px 0; }
   .screen-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--text-primary); margin-bottom: 18px; line-height: 1.2; }
   .flag-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-  .flag-tag-amber { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
-  .flag-tag-red   { background: var(--danger-bg);  color: var(--danger-text);  border: 1px solid var(--danger-border); }
+  .flag-tag-amber    { background: var(--warning-bg);      color: var(--warning-text);      border: 1px solid var(--warning-border); }
+  .flag-tag-red      { background: var(--danger-bg);       color: var(--danger-text);       border: 1px solid var(--danger-border); }
+  .flag-tag-info     { background: var(--info-bg);         color: var(--info-text);         border: 1px solid var(--info-border); }
+  .flag-tag-soft-red { background: var(--soft-danger-bg);  color: var(--soft-danger-text);  border: 1px solid var(--soft-danger-border); }
 
   /* LOADING */
   .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; }
@@ -205,7 +211,7 @@
         <div class="days-grid" id="o1-days"></div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-success" id="btn-o1-checkin" onclick="doCheckin('outcome1')">✓ Mark My Attendance</button>
+          <button class="btn btn-primary" id="btn-o1-checkin" onclick="doCheckin('outcome1')">✓ Mark My Attendance</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
@@ -213,86 +219,65 @@
 
     <!-- SCREEN 4: Outcome 2A — Came early -->
     <div class="screen" id="screen-outcome2a">
-      <div class="status-bar status-warning">
-        <div class="status-icon">🌟</div>
-        <div class="status-body">
-          <div class="status-title">You've come early — wonderful!</div>
-          <div class="status-desc">You have registered for another day, but we'd love to have you with us today. You are so welcome here — please walk in!</div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-label">Welcome</div>
         <div class="card-name" id="o2a-name"></div>
         <div class="card-phone" id="o2a-phone"></div>
         <div class="days-label">Your registered days</div>
         <div class="days-grid" id="o2a-days"></div>
-        <div class="status-bar status-warning" style="margin-bottom:0;" id="o2a-detail"></div>
+        <div class="status-bar status-info" style="margin-bottom:0;" id="o2a-detail"></div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o2a-checkin" onclick="doCheckin('outcome2a')">Yes, Log My Walk-in for Today</button>
+          <button class="btn btn-success" id="btn-o2a-checkin" onclick="doCheckin('outcome2a')">Yes, Log My Walk-in for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:4px;">
-        Entry logged and flagged as <span class="flag-tag flag-tag-amber">early walk-in</span>
+        Entry logged and flagged as <span class="flag-tag flag-tag-info">early walk-in</span>
       </div>
     </div>
 
     <!-- SCREEN 5: Outcome 2B — Missed day -->
     <div class="screen" id="screen-outcome2b">
-      <div class="status-bar status-warning">
-        <div class="status-icon">💛</div>
-        <div class="status-body">
-          <div class="status-title">So glad you could make it today!</div>
-          <div class="status-desc">You missed your registered day, but we are so glad you are here with us today. You are always welcome — come right in!</div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-label">Welcome</div>
         <div class="card-name" id="o2b-name"></div>
         <div class="card-phone" id="o2b-phone"></div>
         <div class="days-label">Your registered days</div>
         <div class="days-grid" id="o2b-days"></div>
-        <div class="status-bar status-warning" style="margin-bottom:0;" id="o2b-detail"></div>
+        <div class="status-bar status-info" style="margin-bottom:0;" id="o2b-detail"></div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o2b-checkin" onclick="doCheckin('outcome2b')">Yes, Log My Walk-in for Today</button>
+          <button class="btn btn-success" id="btn-o2b-checkin" onclick="doCheckin('outcome2b')">Yes, Log My Walk-in for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:4px;">
-        Entry logged and flagged as <span class="flag-tag flag-tag-amber">missed day walk-in</span>
+        Entry logged and flagged as <span class="flag-tag flag-tag-info">missed day walk-in</span>
       </div>
     </div>
 
     <!-- SCREEN 6: Outcome 2C — Extra day -->
     <div class="screen" id="screen-outcome2c">
-      <div class="status-bar status-warning">
-        <div class="status-icon">🔥</div>
-        <div class="status-body">
-          <div class="status-title">You're on fire — keep coming!</div>
-          <div class="status-desc">You've already attended all your registered days, and you're back for more — that spirit is everything. You are more than welcome here today!</div>
-        </div>
-      </div>
       <div class="card">
         <div class="card-label">Welcome back</div>
         <div class="card-name" id="o2c-name"></div>
         <div class="card-phone" id="o2c-phone"></div>
         <div class="days-label">Your attendance so far</div>
         <div class="days-grid" id="o2c-days"></div>
-        <div class="status-bar status-warning" style="margin-bottom:0;" id="o2c-detail"></div>
+        <div class="status-bar status-soft-danger" style="margin-bottom:0;" id="o2c-detail"></div>
         <div class="sponsored-wrap" onclick="document.getElementById('sponsored-o2c').click(); event.stopPropagation();">
           <input type="checkbox" id="sponsored-o2c" onclick="event.stopPropagation();">
           <label for="sponsored-o2c">This is a sponsored entry, no payment needed</label>
         </div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o2c-checkin" onclick="doCheckin('outcome2c')">Payment Made, Log Entry for Today</button>
+          <button class="btn btn-dark" id="btn-o2c-checkin" onclick="doCheckin('outcome2c')">Payment Made, Log Entry for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:4px;">
-        Entry logged and flagged as <span class="flag-tag flag-tag-amber">extra day — check-in noted</span>
+        Entry logged and flagged as <span class="flag-tag flag-tag-soft-red">extra day — payment required</span>
       </div>
     </div>
 
@@ -320,11 +305,11 @@
 
     <!-- SCREEN 7: Outcome 3 — Not found -->
     <div class="screen" id="screen-outcome3">
-      <div class="status-bar status-danger">
+      <div class="status-bar status-soft-danger">
         <div class="status-icon">🌸</div>
         <div class="status-body">
           <div class="status-title">Welcome, new friend!</div>
-          <div class="status-desc">We couldn't find your number in our records, but that's okay — everyone is welcome here. Let us note your name and get you checked in!</div>
+          <div class="status-desc">We couldn't find your number in our records — please collect payment and note the name below to log the entry.</div>
         </div>
       </div>
       <div class="card">
@@ -339,12 +324,12 @@
         </div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o3-checkin" onclick="doCheckin('outcome3')">Payment Made, Log Entry for Today</button>
+          <button class="btn btn-dark" id="btn-o3-checkin" onclick="doCheckin('outcome3')">Payment Made, Log Entry for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center; margin-top:4px;">
-        Entry logged and flagged as <span class="flag-tag flag-tag-red">unverified — team follow-up</span>
+        Entry logged and flagged as <span class="flag-tag flag-tag-soft-red">unverified — team follow-up</span>
       </div>
     </div>
 
@@ -601,12 +586,15 @@ function renderOutcome(data) {
     document.getElementById('o2a-phone').textContent = phone;
     document.getElementById('o2a-days').innerHTML    =
       buildDayChips(registered_days, attended_days, day_number);
-    const nextReg = registered_days.filter(d => d > day_number)[0];
-    document.getElementById('o2a-detail').innerHTML  =
-      `<div class="status-icon" style="font-size:15px;">📅</div>
+    const consumed2a = state.currentLookup.consumed_day
+      || registered_days.filter(d => d > day_number && !attended_days.includes(d))[0];
+    const regList2a = registered_days.map(dayLabel).join(', ');
+    document.getElementById('o2a-detail').innerHTML =
+      `<div class="status-icon" style="font-size:15px;">🌟</div>
        <div class="status-body"><div class="status-desc">
-         Your registered day is <strong>${dayLabel(nextReg)}</strong>.
-         Today is <strong>${dayLabel(day_number)}</strong> — you're here early. Come on in!
+         You're registered for <strong>${regList2a}</strong>. You're here a day early —
+         your <strong>${dayLabel(consumed2a)}</strong> slot will cover today's visit.
+         You are so welcome, come right in!
        </div></div>`;
     showScreen('screen-outcome2a');
     return;
@@ -617,12 +605,18 @@ function renderOutcome(data) {
     document.getElementById('o2b-phone').textContent = phone;
     document.getElementById('o2b-days').innerHTML    =
       buildDayChips(registered_days, attended_days, day_number);
-    const missedDay = registered_days.filter(d => d < day_number && !attended_days.includes(d))[0];
-    document.getElementById('o2b-detail').innerHTML  =
-      `<div class="status-icon" style="font-size:15px;">📌</div>
+    const missedList2b = registered_days
+      .filter(d => d < day_number && !attended_days.includes(d))
+      .map(dayLabel).join(', ');
+    const consumed2b = state.currentLookup.consumed_day
+      || registered_days.filter(d => d < day_number && !attended_days.includes(d)).reverse()[0];
+    const regList2b = registered_days.map(dayLabel).join(', ');
+    document.getElementById('o2b-detail').innerHTML =
+      `<div class="status-icon" style="font-size:15px;">💛</div>
        <div class="status-body"><div class="status-desc">
-         Your registered day <strong>${dayLabel(missedDay)}</strong> was missed.
-         Today is <strong>${dayLabel(day_number)}</strong> — we're happy you made it!
+         You were registered for <strong>${regList2b}</strong>. We missed you on
+         <strong>${missedList2b}</strong> — your <strong>${dayLabel(consumed2b)}</strong>
+         slot covers today's visit. So glad you made it!
        </div></div>`;
     showScreen('screen-outcome2b');
     return;
@@ -633,11 +627,13 @@ function renderOutcome(data) {
     document.getElementById('o2c-phone').textContent = phone;
     document.getElementById('o2c-days').innerHTML    =
       buildDayChips(registered_days, attended_days, day_number);
-    document.getElementById('o2c-detail').innerHTML  =
-      `<div class="status-icon" style="font-size:15px;">✨</div>
+    const regList2c = registered_days.map(dayLabel).join(', ');
+    document.getElementById('o2c-detail').innerHTML =
+      `<div class="status-icon" style="font-size:15px;">🔥</div>
        <div class="status-body"><div class="status-desc">
-         You've completed all your registered days.
-         Today, <strong>${dayLabel(day_number)}</strong>, is a bonus day — and we're thrilled you're here!
+         You've attended all your registered days (<strong>${regList2c}</strong>).
+         Today (<strong>${dayLabel(day_number)}</strong>) is a bonus visit —
+         please confirm payment at the desk to log your entry.
        </div></div>`;
     showScreen('screen-outcome2c');
     return;
