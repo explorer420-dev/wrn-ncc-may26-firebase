@@ -55,6 +55,9 @@
   .form-input::placeholder { color: var(--border); font-size: 18px; }
   .form-input-name { font-size: 16px; height: 48px; letter-spacing: 0; }
   .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .sponsored-wrap { display: flex; align-items: center; gap: 10px; margin-top: 14px; margin-bottom: 4px; padding: 10px 12px; background: var(--gold-light); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
+  .sponsored-wrap input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer; }
+  .sponsored-wrap label { font-size: 13px; color: var(--text-secondary); cursor: pointer; line-height: 1.4; }
 
   /* BUTTONS */
   .btn { width: 100%; height: 52px; border-radius: var(--radius-sm); border: none; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.02em; }
@@ -278,9 +281,13 @@
         <div class="days-label">Your attendance so far</div>
         <div class="days-grid" id="o2c-days"></div>
         <div class="status-bar status-warning" style="margin-bottom:0;" id="o2c-detail"></div>
+        <div class="sponsored-wrap" onclick="document.getElementById('sponsored-o2c').click(); event.stopPropagation();">
+          <input type="checkbox" id="sponsored-o2c" onclick="event.stopPropagation();">
+          <label for="sponsored-o2c">This is a sponsored entry, no payment needed</label>
+        </div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o2c-checkin" onclick="doCheckin('outcome2c')">Yes, Log My Entry for Today</button>
+          <button class="btn btn-primary" id="btn-o2c-checkin" onclick="doCheckin('outcome2c')">Payment Made, Log Entry for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
@@ -326,9 +333,13 @@
         <label class="form-label" for="name-input">Your full name</label>
         <input class="form-input form-input-name" id="name-input" type="text" placeholder="Enter your name" autocomplete="off">
         <div class="form-hint" style="margin-bottom:0;">Your entry will be logged and our team will follow up</div>
+        <div class="sponsored-wrap" onclick="document.getElementById('sponsored-o3').click(); event.stopPropagation();">
+          <input type="checkbox" id="sponsored-o3" onclick="event.stopPropagation();">
+          <label for="sponsored-o3">This is a sponsored entry, no payment needed</label>
+        </div>
         <hr class="divider">
         <div class="btn-stack">
-          <button class="btn btn-primary" id="btn-o3-checkin" onclick="doCheckin('outcome3')">Confirm My Check-in</button>
+          <button class="btn btn-primary" id="btn-o3-checkin" onclick="doCheckin('outcome3')">Payment Made, Log Entry for Today</button>
           <button class="btn btn-ghost" onclick="resetHome()">← Back</button>
         </div>
       </div>
@@ -476,12 +487,16 @@ function resetHome() {
     'btn-o1-checkin':  '✓ Mark My Attendance',
     'btn-o2a-checkin': 'Yes, Log My Walk-in for Today',
     'btn-o2b-checkin': 'Yes, Log My Walk-in for Today',
-    'btn-o2c-checkin': 'Yes, Log My Entry for Today',
-    'btn-o3-checkin':  'Confirm My Check-in',
+    'btn-o2c-checkin': 'Payment Made, Log Entry for Today',
+    'btn-o3-checkin':  'Payment Made, Log Entry for Today',
   };
   Object.entries(btnDefaults).forEach(([id, text]) => {
     const btn = document.getElementById(id);
     if (btn) { btn.disabled = false; btn.textContent = text; }
+  });
+  ['sponsored-o2c', 'sponsored-o3'].forEach(id => {
+    const cb = document.getElementById(id);
+    if (cb) cb.checked = false;
   });
   showScreen('screen-home');
   setTimeout(() => document.getElementById('phone-input').focus(), 200);
@@ -656,15 +671,27 @@ async function doCheckin(scenario) {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
   try {
+    const isPaymentScenario = scenario === 'outcome2c' || scenario === 'outcome3';
+    const sponsored = isPaymentScenario &&
+      document.getElementById(`sponsored-${scenario === 'outcome2c' ? 'o2c' : 'o3'}`)?.checked;
+    const paymentFlag = !isPaymentScenario
+      ? 'confirmed'
+      : sponsored
+        ? 'sponsored_entry_payment_confirmed_at_desk'
+        : 'payment_confirmed_at_desk';
+
     const params = {
       action:       'checkin',
       phone:        phone,
       name:         name,
       day:          state.todayDayNumber || '',
       scenario:     scenario,
-      payment_flag: scenario === 'outcome3' || scenario === 'outcome2c'
-                    ? 'review_needed' : 'confirmed'
+      payment_flag: paymentFlag,
     };
+
+    if ((scenario === 'outcome2a' || scenario === 'outcome2b') && lookup?.consumed_day) {
+      params.consumed_day = lookup.consumed_day;
+    }
 
     const res = await apiFetch(params);
 
