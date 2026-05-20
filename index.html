@@ -472,6 +472,17 @@ function resetHome() {
   state.currentLookup = null;
   document.getElementById('phone-input').value = '';
   document.getElementById('name-input').value  = '';
+  const btnDefaults = {
+    'btn-o1-checkin':  '✓ Mark My Attendance',
+    'btn-o2a-checkin': 'Yes, Log My Walk-in for Today',
+    'btn-o2b-checkin': 'Yes, Log My Walk-in for Today',
+    'btn-o2c-checkin': 'Yes, Log My Entry for Today',
+    'btn-o3-checkin':  'Confirm My Check-in',
+  };
+  Object.entries(btnDefaults).forEach(([id, text]) => {
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = false; btn.textContent = text; }
+  });
   showScreen('screen-home');
   setTimeout(() => document.getElementById('phone-input').focus(), 200);
 }
