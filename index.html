@@ -421,11 +421,6 @@ window.addEventListener('DOMContentLoaded', () => {
   phoneInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doLookup();
   });
-  // Option A: prefetch when phone reaches 10 digits
-  phoneInput.addEventListener('input', () => {
-    const digits = phoneInput.value.replace(/\D/g, '');
-    if (digits.length === 10) doLookup();
-  });
 });
 
 async function initToday() {
