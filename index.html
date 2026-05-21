@@ -149,6 +149,9 @@
     .form-input { font-size: 24px; height: 60px; }
   }
 </style>
+<!-- Firebase SDK (compat build — works with existing JS style) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 <div class="app">
@@ -386,73 +389,96 @@
 </div>
 
 <script>
-// ─── CONFIGURATION ────────────────────────────────────────
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzJDMscFg7IR3JS29J0fFe8N8Y70luX9pTmzFLutXCv4FQZt8GA0tsMQLaGIyd2y3my/exec';
-const TOKEN = 'WRN2026-NCC-DESK';
+// ─── FIREBASE INIT ────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:            "AIzaSyA5Nn4HRdg7yP6NAdkE-Rmbk_rhNgr8OCs",
+  authDomain:        "wrn-ncc-may26-firebase.firebaseapp.com",
+  projectId:         "wrn-ncc-may26-firebase",
+  storageBucket:     "wrn-ncc-may26-firebase.firebasestorage.app",
+  messagingSenderId: "264899728274",
+  appId:             "1:264899728274:web:8f596a4e04e28eadbca74b",
+});
+const db = firebase.firestore();
 
-// Event dates for streak display (Day 1 = index 0)
-const EVENT_DATES = ['25 May','26 May','27 May','28 May','29 May','30 May'];
+// ─── CONSTANTS ────────────────────────────────────────────
+const EVENT_DATES      = ['25 May','26 May','27 May','28 May','29 May','30 May'];
+const EVENT_START      = new Date('2026-05-25T00:00:00+05:30');
+const EVENT_TOTAL_DAYS = 6;
 
 // ─── APP STATE ────────────────────────────────────────────
 let state = {
   todayDayNumber: null,
   todayDate:      null,
+  testMode:       false,
   currentPhone:   null,
-  currentLookup:  null,  // full lookup response
+  currentLookup:  null,
 };
-
-// ─── KEEP-ALIVE PING ──────────────────────────────────────
-// Fires every 30 seconds while page is open
-// Keeps Apps Script instance warm so lookup + checkin are fast
-
-function startKeepAlive() {
-  setInterval(async () => {
-    try {
-      await apiFetch({ action: 'today' });
-    } catch(e) {
-      // Silent fail — keep-alive is best effort, don't surface errors
-    }
-  }, 30000);
-}
 
 // ─── INIT ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  initToday().then(() => startKeepAlive());
-  document.getElementById('phone-input').addEventListener('keydown', e => {
+  initToday();
+  const phoneInput = document.getElementById('phone-input');
+  phoneInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') doLookup();
+  });
+  // Option A: prefetch when phone reaches 10 digits
+  phoneInput.addEventListener('input', () => {
+    const digits = phoneInput.value.replace(/\D/g, '');
+    if (digits.length === 10) doLookup();
   });
 });
 
 async function initToday() {
   const btn = document.getElementById('btn-lookup');
   try {
-    const res = await apiFetch({ action: 'today' });
-    if (res.success) {
-      state.todayDayNumber = res.day_number;
-      state.todayDate      = res.date;
-      const pill = document.getElementById('today-pill');
-      if (res.in_event && res.day_number) {
-        pill.innerHTML = res.test_mode
-          ? `🧪 TEST · Day ${res.day_number} · ${res.date}`
-          : `Today · ${res.date}`;
-      } else {
-        pill.textContent = res.date || 'Event: 25–30 May';
+    const snap = await db.collection('config').doc('event').get();
+    const cfg  = snap.data() || {};
+
+    const override = cfg.test_day_override || 0;
+    let dayNumber  = null;
+    let testMode   = false;
+
+    if (override >= 1 && override <= EVENT_TOTAL_DAYS) {
+      dayNumber = override;
+      testMode  = true;
+    } else {
+      // Compute day from today's date in IST
+      const nowIST  = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const startIST = new Date(EVENT_START.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const diffDays = Math.floor((nowIST - startIST) / 86400000);
+      if (diffDays >= 0 && diffDays < EVENT_TOTAL_DAYS) {
+        dayNumber = diffDays + 1;
       }
+    }
+
+    const dateStr = dayNumber
+      ? EVENT_DATES[dayNumber - 1] + ' 2026'
+      : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+    state.todayDayNumber = dayNumber;
+    state.todayDate      = dateStr;
+    state.testMode       = testMode;
+
+    const pill = document.getElementById('today-pill');
+    if (dayNumber) {
+      pill.textContent = testMode
+        ? `🧪 TEST · Day ${dayNumber} · ${EVENT_DATES[dayNumber - 1]}`
+        : `Today · ${EVENT_DATES[dayNumber - 1]}`;
+    } else {
+      pill.textContent = 'Event: 25–30 May';
     }
   } catch(e) {
     document.getElementById('today-pill').textContent = '25–30 May 2026';
   } finally {
-    btn.disabled = false;
+    btn.disabled    = false;
     btn.textContent = 'Check Registration →';
   }
 }
 
-// ─── API HELPER ───────────────────────────────────────────
-async function apiFetch(params) {
-  const url = SCRIPT_URL + '?' + new URLSearchParams({ ...params, token: TOKEN }).toString();
-  const res  = await fetch(url, { redirect: 'follow' });
-  const data = await res.json();
-  return data;
+// ─── PHONE NORMALISATION ──────────────────────────────────
+function normalisePhone(raw) {
+  let p = raw.replace(/\s+/g, '').replace(/^\+91/, '').replace(/^0/, '');
+  return p.replace(/\D/g, '');
 }
 
 // ─── SCREEN SWITCHER ──────────────────────────────────────
@@ -513,40 +539,108 @@ function stopLoadingMessages() {
 }
 
 // ─── LOOKUP ───────────────────────────────────────────────
+let lookupInProgress = false;
+
 async function doLookup() {
+  if (lookupInProgress) return;
   const raw = document.getElementById('phone-input').value.trim();
   if (!raw || raw.replace(/\s/g,'').length < 6) {
     document.getElementById('phone-input').focus();
     return;
   }
 
-  state.currentPhone = raw;
+  lookupInProgress       = true;
+  const phone            = normalisePhone(raw);
+  state.currentPhone     = phone;
   document.getElementById('loading-phone-display').textContent = raw;
   showScreen('screen-loading');
   startLoadingMessages();
 
   try {
-    const data = await apiFetch({ action: 'lookup', phone: raw });
+    const snap          = await db.collection('master').doc(phone).get();
+    const todayDayNum   = state.todayDayNumber;
+    const data          = computeScenario(snap, phone, todayDayNum);
     stopLoadingMessages();
-
-    if (!data.success) {
-      showError(data.error || 'Lookup failed');
-      return;
-    }
-
     state.currentLookup = data;
     renderOutcome(data);
-
   } catch(e) {
     stopLoadingMessages();
     showError('Could not reach the registration system. Check your internet connection.');
+  } finally {
+    lookupInProgress = false;
   }
+}
+
+// Compute scenario from Firestore master doc — mirrors Apps Script actionLookup logic
+function computeScenario(snap, phone, todayDayNum) {
+  // Not in master → outcome3
+  if (!snap.exists) {
+    return { found: false, phone, scenario: 'outcome3',
+             registered_days: [], attended_days: [], day_number: todayDayNum };
+  }
+
+  const d              = snap.data();
+  const registeredDays = d.registered_days || [];
+  const attendedDays   = d.attended_days   || [];
+  const name           = d.name            || '';
+
+  // No registered days → outcome3
+  if (registeredDays.length === 0) {
+    return { found: false, phone, name, scenario: 'outcome3',
+             registered_days: registeredDays, attended_days: attendedDays, day_number: todayDayNum };
+  }
+
+  // Outside event window
+  if (!todayDayNum) {
+    return { found: true, phone, name, scenario: 'outside_event',
+             registered_days: registeredDays, attended_days: attendedDays, day_number: null };
+  }
+
+  // Already checked in today
+  if (attendedDays.includes(todayDayNum)) {
+    return { found: true, phone, name, scenario: 'already_checked_in',
+             registered_days: registeredDays, attended_days: attendedDays, day_number: todayDayNum };
+  }
+
+  // Registered for today
+  if (registeredDays.includes(todayDayNum)) {
+    return { found: true, phone, name, scenario: 'outcome1',
+             registered_days: registeredDays, attended_days: attendedDays, day_number: todayDayNum };
+  }
+
+  // Remaining unattended days
+  const remaining = registeredDays.filter(day => !attendedDays.includes(day));
+
+  // All registered days exhausted → outcome2c (bonus visit)
+  if (remaining.length === 0) {
+    return { found: true, phone, name, scenario: 'outcome2c',
+             registered_days: registeredDays, attended_days: attendedDays, day_number: todayDayNum };
+  }
+
+  // Has unattended future day → outcome2a (came early)
+  const futureDays = remaining.filter(day => day > todayDayNum).sort((a, b) => a - b);
+  if (futureDays.length > 0) {
+    return { found: true, phone, name, scenario: 'outcome2a',
+             registered_days: registeredDays, attended_days: attendedDays,
+             day_number: todayDayNum, consumed_day: futureDays[0] };
+  }
+
+  // Has unattended past day → outcome2b (came late)
+  const pastDays = remaining.filter(day => day < todayDayNum).sort((a, b) => b - a);
+  if (pastDays.length > 0) {
+    return { found: true, phone, name, scenario: 'outcome2b',
+             registered_days: registeredDays, attended_days: attendedDays,
+             day_number: todayDayNum, consumed_day: pastDays[0] };
+  }
+
+  // Fallback
+  return { found: true, phone, name, scenario: 'outcome2c',
+           registered_days: registeredDays, attended_days: attendedDays, day_number: todayDayNum };
 }
 
 // ─── RENDER OUTCOME ───────────────────────────────────────
 function renderOutcome(data) {
   if (!data.found) {
-    // Outcome 3 — not found
     document.getElementById('o3-phone').textContent = data.phone;
     showScreen('screen-outcome3');
     return;
@@ -586,9 +680,8 @@ function renderOutcome(data) {
     document.getElementById('o2a-phone').textContent = phone;
     document.getElementById('o2a-days').innerHTML    =
       buildDayChips(registered_days, attended_days, day_number);
-    const consumed2a = state.currentLookup.consumed_day
-      || registered_days.filter(d => d > day_number && !attended_days.includes(d))[0];
-    const regList2a = registered_days.map(dayLabel).join(', ');
+    const consumed2a = data.consumed_day;
+    const regList2a  = registered_days.map(dayLabel).join(', ');
     document.getElementById('o2a-detail').innerHTML =
       `<div class="status-icon" style="font-size:15px;">🌟</div>
        <div class="status-body"><div class="status-desc">
@@ -608,9 +701,8 @@ function renderOutcome(data) {
     const missedList2b = registered_days
       .filter(d => d < day_number && !attended_days.includes(d))
       .map(dayLabel).join(', ');
-    const consumed2b = state.currentLookup.consumed_day
-      || registered_days.filter(d => d < day_number && !attended_days.includes(d)).reverse()[0];
-    const regList2b = registered_days.map(dayLabel).join(', ');
+    const consumed2b   = data.consumed_day;
+    const regList2b    = registered_days.map(dayLabel).join(', ');
     document.getElementById('o2b-detail').innerHTML =
       `<div class="status-icon" style="font-size:15px;">💛</div>
        <div class="status-body"><div class="status-desc">
@@ -646,9 +738,9 @@ function renderOutcome(data) {
 
 // ─── CHECK-IN ─────────────────────────────────────────────
 async function doCheckin(scenario) {
-  const lookup = state.currentLookup;
-  const phone  = lookup ? lookup.phone : state.currentPhone;
-  const name   = scenario === 'outcome3'
+  const lookup   = state.currentLookup;
+  const phone    = lookup ? lookup.phone : normalisePhone(state.currentPhone || '');
+  const name     = scenario === 'outcome3'
     ? document.getElementById('name-input').value.trim()
     : (lookup ? lookup.name : '');
 
@@ -657,7 +749,6 @@ async function doCheckin(scenario) {
     return;
   }
 
-  // Disable the button to prevent double-tap
   const btnMap = {
     outcome1: 'btn-o1-checkin', outcome2a: 'btn-o2a-checkin',
     outcome2b: 'btn-o2b-checkin', outcome2c: 'btn-o2c-checkin',
@@ -676,32 +767,54 @@ async function doCheckin(scenario) {
         ? 'sponsored_entry_payment_confirmed_at_desk'
         : 'payment_confirmed_at_desk';
 
-    const params = {
-      action:       'checkin',
-      phone:        phone,
-      name:         name,
-      day:          state.todayDayNumber || '',
-      scenario:     scenario,
-      payment_flag: paymentFlag,
-    };
+    const dayNum   = state.todayDayNumber;
+    const dateStr  = state.todayDate || '';
+    const nowIST   = new Date().toLocaleTimeString('en-IN',
+      { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 
-    if ((scenario === 'outcome2a' || scenario === 'outcome2b') && lookup?.consumed_day) {
-      params.consumed_day = lookup.consumed_day;
+    // Firestore batch: write attendance_log + update master.attended_days atomically
+    const batch = db.batch();
+
+    // 1. Append to attendance_log
+    const logRef = db.collection('attendance_log').doc();
+    batch.set(logRef, {
+      timestamp:             firebase.firestore.FieldValue.serverTimestamp(),
+      phone,
+      name,
+      day_number:            dayNum || null,
+      date:                  dateStr,
+      scenario,
+      payment_flag:          paymentFlag,
+      consumed_day:          (scenario === 'outcome2a' || scenario === 'outcome2b')
+                               ? (lookup?.consumed_day || null) : null,
+      notes:                 '',
+      test_mode:             state.testMode,
+    });
+
+    // 2. Update master doc — add today to attended_days
+    const masterRef = db.collection('master').doc(phone);
+    if (scenario === 'outcome3') {
+      // New registrant — create master doc
+      batch.set(masterRef, {
+        name,
+        registered_days: [],
+        attended_days:   dayNum ? [dayNum] : [],
+        remarks:         '',
+        source:          'manual',
+      });
+    } else {
+      batch.update(masterRef, {
+        attended_days: firebase.firestore.FieldValue.arrayUnion(dayNum),
+      });
     }
 
-    const res = await apiFetch(params);
+    await batch.commit();
 
-    if (!res.success) {
-      showError(res.error || 'Check-in failed. Please try again.');
-      if (btn) { btn.disabled = false; btn.textContent = 'Try Again'; }
-      return;
-    }
-
-    renderSuccess(res, lookup);
+    renderSuccess({ name, day: dayNum, time: nowIST }, lookup);
 
   } catch(e) {
     showError('Check-in could not be saved. Please check your connection.');
-    if (btn) { btn.disabled = false; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Try Again'; }
   }
 }
 
@@ -715,12 +828,11 @@ function renderSuccess(res, lookup) {
   document.getElementById('success-meta').innerHTML =
     `${dateStr}${dayStr ? ' · ' + dayStr : ''} · ${res.time || ''}`;
 
-  // Build streak
   const attended = lookup ? [...(lookup.attended_days || []), dayNum] : [dayNum];
   const streakHtml = EVENT_DATES.map((label, i) => {
-    const d = i + 1;
+    const d          = i + 1;
     const isAttended = attended.includes(d);
-    const conn = i < 5 ? `<div class="streak-conn">–</div>` : '';
+    const conn       = i < 5 ? `<div class="streak-conn">–</div>` : '';
     return `
       <div class="streak-day">
         <div class="streak-icon${isAttended ? '' : ' dim'}">🔥</div>
@@ -739,7 +851,6 @@ function showError(msg) {
   showScreen('screen-error');
 }
 
-// Build day chips based on registration + attendance data
 function buildDayChips(registeredDays, attendedDays, todayNum) {
   return EVENT_DATES.map((label, i) => {
     const d = i + 1;
@@ -753,7 +864,6 @@ function buildDayChips(registeredDays, attendedDays, todayNum) {
   }).join('');
 }
 
-// Day number → readable label
 function dayLabel(dayNum) {
   if (!dayNum) return '';
   const labels = ['25th May','26th May','27th May','28th May','29th May','30th May'];

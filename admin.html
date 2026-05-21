@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WRN Admin — NCC Hyderabad</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f10; --surface: #1a1a1e; --border: #2e2e36;
+    --text: #f0f0f2; --muted: #8a8a9a; --accent: #7c6af7;
+    --green: #34d399; --amber: #fbbf24; --red: #f87171;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* ── Password gate ── */
+  #gate { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 360px; text-align: center; }
+  .gate-card h1 { font-size: 20px; margin-bottom: 8px; }
+  .gate-card p  { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .gate-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px 14px; outline: none; }
+  .gate-input:focus { border-color: var(--accent); }
+  .gate-btn { margin-top: 12px; width: 100%; background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px; }
+  .gate-btn:hover { opacity: .9; }
+  .gate-error { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* ── Dashboard ── */
+  #dashboard { display: none; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 16px; font-weight: 700; }
+  .topbar-meta { color: var(--muted); font-size: 12px; }
+  .stats-row { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; flex: 0 0 auto; min-width: 110px; padding: 14px 16px; text-align: center; }
+  .stat-num  { font-size: 26px; font-weight: 700; }
+  .stat-lbl  { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; }
+  .tab { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 500; padding: 12px 16px; border-bottom: 2px solid transparent; }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  /* ── Panel content ── */
+  .panel { display: none; padding: 16px 20px; }
+  .panel.active { display: block; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+  .search-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); flex: 1; min-width: 180px; font-size: 14px; outline: none; padding: 9px 12px; }
+  .search-input:focus { border-color: var(--accent); }
+  .csv-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; padding: 9px 14px; white-space: nowrap; }
+  .csv-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  table { border-collapse: collapse; width: 100%; }
+  thead th { background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; padding: 10px 14px; text-align: left; text-transform: uppercase; white-space: nowrap; }
+  tbody tr { border-top: 1px solid var(--border); }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+  td { padding: 10px 14px; vertical-align: middle; white-space: nowrap; }
+  .chip { border-radius: 4px; display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; }
+  .chip-green  { background: rgba(52,211,153,.15); color: var(--green); }
+  .chip-muted  { background: rgba(255,255,255,.07); color: var(--muted); }
+  .chip-amber  { background: rgba(251,191,36,.15);  color: var(--amber); }
+  .attended-mark { color: var(--green); }
+  .empty-msg { color: var(--muted); padding: 32px; text-align: center; }
+
+  /* ── Live dot ── */
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>WRN Admin</h1>
+    <p>Women's Revival Nights · NCC Hyderabad</p>
+    <input class="gate-input" id="pw-input" type="password" placeholder="Enter admin password" autocomplete="current-password">
+    <button class="gate-btn" id="pw-btn" onclick="checkPassword()">Unlock Dashboard</button>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <h1>WRN Admin · NCC Hyderabad</h1>
+    <span class="topbar-meta" id="topbar-day">Loading…</span>
+  </div>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-registered">–</div><div class="stat-lbl">Registered</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-checked-in">–</div><div class="stat-lbl">Checked In Today</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-log-total">–</div><div class="stat-lbl">Total Check-ins</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('registered')">Registered</button>
+    <button class="tab" onclick="switchTab('log')"><span class="live-dot"></span>Attendance Log</button>
+  </div>
+
+  <!-- Registered tab -->
+  <div class="panel active" id="panel-registered">
+    <div class="toolbar">
+      <input class="search-input" id="search-registered" placeholder="Search by name or phone…" oninput="filterRegistered()">
+      <button class="csv-btn" onclick="downloadCSV('registered')">⬇ Download CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Name</th><th>Phone</th><th>Registered Days</th>
+          <th>Day 1</th><th>Day 2</th><th>Day 3</th><th>Day 4</th><th>Day 5</th><th>Day 6</th>
+        </tr></thead>
+        <tbody id="tbody-registered"><tr><td colspan="9" class="empty-msg">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Attendance Log tab -->
+  <div class="panel" id="panel-log">
+    <div class="toolbar">
+      <span style="color:var(--muted);font-size:13px;"><span class="live-dot"></span>Live — updates automatically</span>
+      <button class="csv-btn" onclick="downloadCSV('log')" style="margin-left:auto;">⬇ Download CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Time</th><th>Name</th><th>Phone</th><th>Day</th><th>Scenario</th><th>Payment</th><th>Test</th>
+        </tr></thead>
+        <tbody id="tbody-log"><tr><td colspan="7" class="empty-msg">Waiting for data…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:            "AIzaSyA5Nn4HRdg7yP6NAdkE-Rmbk_rhNgr8OCs",
+  authDomain:        "wrn-ncc-may26-firebase.firebaseapp.com",
+  projectId:         "wrn-ncc-may26-firebase",
+  storageBucket:     "wrn-ncc-may26-firebase.firebasestorage.app",
+  messagingSenderId: "264899728274",
+  appId:             "1:264899728274:web:8f596a4e04e28eadbca74b",
+});
+const db = firebase.firestore();
+
+const EVENT_DATES = ['25 May','26 May','27 May','28 May','29 May','30 May'];
+const DAY_LABELS  = ['25th May','26th May','27th May','28th May','29th May','30th May'];
+
+let allRegistered = [];   // cached master rows for filtering + CSV
+let allLogRows    = [];   // cached log rows for CSV
+let unsubLog      = null; // live listener unsubscribe handle
+let todayDayNum   = null;
+
+// ── PASSWORD CHECK ────────────────────────────────────────
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+async function checkPassword() {
+  const btn = document.getElementById('pw-btn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+  const entered = document.getElementById('pw-input').value.trim();
+  try {
+    const snap = await db.collection('config').doc('event').get();
+    const cfg  = snap.data() || {};
+
+    // Compute today's day number for topbar
+    const override = cfg.test_day_override || 0;
+    if (override >= 1 && override <= 6) {
+      todayDayNum = override;
+    } else {
+      const nowIST   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const startIST = new Date(new Date('2026-05-25T00:00:00+05:30').toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      const diff     = Math.floor((nowIST - startIST) / 86400000);
+      todayDayNum    = (diff >= 0 && diff < 6) ? diff + 1 : null;
+    }
+
+    if (entered === cfg.admin_password) {
+      document.getElementById('gate').style.display      = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      const dayLabel = todayDayNum ? `Day ${todayDayNum} · ${EVENT_DATES[todayDayNum - 1]}` : 'Outside event window';
+      document.getElementById('topbar-day').textContent  = (cfg.test_day_override ? '🧪 TEST · ' : '') + dayLabel;
+      loadDashboard();
+    } else {
+      document.getElementById('pw-error').textContent = 'Incorrect password.';
+      btn.disabled = false; btn.textContent = 'Unlock Dashboard';
+    }
+  } catch(e) {
+    document.getElementById('pw-error').textContent = 'Could not connect to Firebase.';
+    btn.disabled = false; btn.textContent = 'Unlock Dashboard';
+  }
+}
+
+// ── DASHBOARD LOAD ────────────────────────────────────────
+async function loadDashboard() {
+  loadRegistered();
+  startLogListener();
+}
+
+// ── REGISTERED TAB ────────────────────────────────────────
+async function loadRegistered() {
+  const snap = await db.collection('master').get();
+  allRegistered = snap.docs.map(doc => ({ phone: doc.id, ...doc.data() }));
+  allRegistered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  renderRegistered(allRegistered);
+  updateStats();
+}
+
+function renderRegistered(rows) {
+  const tbody = document.getElementById('tbody-registered');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-msg">No records found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const regDays = r.registered_days || [];
+    const attDays = r.attended_days   || [];
+    const regStr  = regDays.map(d => DAY_LABELS[d - 1]).join(', ') || '—';
+    const dayCells = [1,2,3,4,5,6].map(d => {
+      if (!regDays.includes(d)) return `<td><span class="chip chip-muted">—</span></td>`;
+      return attDays.includes(d)
+        ? `<td><span class="chip chip-green">✓</span></td>`
+        : `<td><span class="chip chip-amber">Reg</span></td>`;
+    }).join('');
+    return `<tr><td>${esc(r.name || '—')}</td><td>${esc(r.phone)}</td><td>${esc(regStr)}</td>${dayCells}</tr>`;
+  }).join('');
+}
+
+function filterRegistered() {
+  const q = document.getElementById('search-registered').value.toLowerCase().trim();
+  const filtered = q
+    ? allRegistered.filter(r =>
+        (r.name  || '').toLowerCase().includes(q) ||
+        (r.phone || '').includes(q))
+    : allRegistered;
+  renderRegistered(filtered);
+}
+
+function updateStats() {
+  document.getElementById('stat-registered').textContent = allRegistered.length;
+  const checkedInToday = todayDayNum
+    ? allRegistered.filter(r => (r.attended_days || []).includes(todayDayNum)).length
+    : 0;
+  document.getElementById('stat-checked-in').textContent = checkedInToday;
+}
+
+// ── ATTENDANCE LOG TAB (live) ─────────────────────────────
+function startLogListener() {
+  if (unsubLog) unsubLog();
+  unsubLog = db.collection('attendance_log')
+    .orderBy('timestamp', 'desc')
+    .onSnapshot(snap => {
+      allLogRows = snap.docs.map(doc => doc.data());
+      renderLog(allLogRows);
+      document.getElementById('stat-log-total').textContent = allLogRows.length;
+    });
+}
+
+function renderLog(rows) {
+  const tbody = document.getElementById('tbody-log');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-msg">No check-ins yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const ts   = r.timestamp ? r.timestamp.toDate() : null;
+    const time = ts ? ts.toLocaleTimeString('en-IN',
+      { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : '—';
+    const scenarioLabel = {
+      outcome1: 'Registered', outcome2a: 'Early walk-in',
+      outcome2b: 'Late walk-in', outcome2c: 'Bonus visit', outcome3: 'Walk-in (new)',
+    }[r.scenario] || r.scenario || '—';
+    const testBadge = r.test_mode ? `<span class="chip chip-amber">TEST</span>` : '';
+    return `<tr>
+      <td>${esc(time)}</td>
+      <td>${esc(r.name || '—')}</td>
+      <td>${esc(r.phone || '—')}</td>
+      <td>${r.day_number ? `Day ${r.day_number}` : '—'}</td>
+      <td>${esc(scenarioLabel)}</td>
+      <td style="font-size:11px;color:var(--muted);">${esc(r.payment_flag || '—')}</td>
+      <td>${testBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['registered','log'][i] === name);
+  });
+  document.getElementById('panel-registered').classList.toggle('active', name === 'registered');
+  document.getElementById('panel-log').classList.toggle('active',        name === 'log');
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────
+function downloadCSV(type) {
+  let headers, rows;
+  if (type === 'registered') {
+    headers = ['Name','Phone','Registered Days','Day 1','Day 2','Day 3','Day 4','Day 5','Day 6'];
+    const q  = document.getElementById('search-registered').value.toLowerCase().trim();
+    const src = q ? allRegistered.filter(r =>
+      (r.name||'').toLowerCase().includes(q) || (r.phone||'').includes(q)) : allRegistered;
+    rows = src.map(r => {
+      const reg = r.registered_days || [];
+      const att = r.attended_days   || [];
+      return [
+        r.name || '', r.phone || '',
+        reg.map(d => DAY_LABELS[d-1]).join('; '),
+        ...[1,2,3,4,5,6].map(d => !reg.includes(d) ? '' : att.includes(d) ? 'Attended' : 'Registered'),
+      ];
+    });
+  } else {
+    headers = ['Timestamp','Name','Phone','Day','Scenario','Payment Flag','Test Mode'];
+    rows = allLogRows.map(r => {
+      const ts = r.timestamp ? r.timestamp.toDate().toISOString() : '';
+      return [ts, r.name||'', r.phone||'', r.day_number||'', r.scenario||'', r.payment_flag||'', r.test_mode ? 'TEST' : ''];
+    });
+  }
+  const csv  = [headers, ...rows].map(row =>
+    row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url, download: `wrn-${type}-${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click(); URL.revokeObjectURL(url);
+}
+
+// ── UTILITY ───────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
