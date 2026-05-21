@@ -28,40 +28,65 @@
 
   /* ── Dashboard ── */
   #dashboard { display: none; }
-  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
-  .topbar h1 { font-size: 16px; font-weight: 700; }
-  .topbar-meta { color: var(--muted); font-size: 12px; }
-  .stats-row { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; flex: 0 0 auto; min-width: 110px; padding: 14px 16px; text-align: center; }
-  .stat-num  { font-size: 26px; font-weight: 700; }
-  .stat-lbl  { color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+  /* ── Topbar ── */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .topbar h1 { font-size: 15px; font-weight: 700; }
+  .topbar-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  /* ── Stats ── */
+  .stats-section { padding: 16px 16px 4px; }
+
+  /* Row 1 — primary (3 cards, always side by side) */
+  .primary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .stat-card.accent-border { border-color: var(--accent); }
+  .stat-num { font-size: 26px; font-weight: 700; line-height: 1; }
+  .stat-lbl { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+  /* Row 2 — scenario breakdown (text row) */
+  .scenario-row { color: var(--muted); font-size: 13px; margin-bottom: 4px; padding: 8px 2px; display: flex; flex-wrap: wrap; gap: 4px 0; }
+  .sc-item { white-space: nowrap; }
+  .sc-item strong { color: var(--text); font-weight: 600; }
+
+  /* ── Mobile adjustments ── */
+  @media (max-width: 540px) {
+    .stats-section { padding: 12px 12px 4px; }
+    .stat-num { font-size: 22px; }
+    .stat-lbl { font-size: 10px; }
+    .scenario-row { font-size: 12px; }
+  }
+  @media (max-width: 360px) {
+    .primary-row { gap: 6px; }
+    .stat-card { padding: 10px 6px; }
+    .stat-num { font-size: 20px; }
+  }
 
   /* ── Tabs ── */
-  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 20px; }
-  .tab { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 500; padding: 12px 16px; border-bottom: 2px solid transparent; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; margin-top: 8px; }
+  .tab { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 500; padding: 10px 14px; border-bottom: 2px solid transparent; white-space: nowrap; }
   .tab.active { color: var(--text); border-bottom-color: var(--accent); }
 
   /* ── Panel content ── */
-  .panel { display: none; padding: 16px 20px; }
+  .panel { display: none; padding: 14px 16px; }
   .panel.active { display: block; }
   .toolbar { display: flex; gap: 10px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
-  .search-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); flex: 1; min-width: 180px; font-size: 14px; outline: none; padding: 9px 12px; }
+  .search-input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); flex: 1; min-width: 160px; font-size: 14px; outline: none; padding: 9px 12px; }
   .search-input:focus { border-color: var(--accent); }
   .csv-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; padding: 9px 14px; white-space: nowrap; }
   .csv-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   /* ── Tables ── */
-  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
   table { border-collapse: collapse; width: 100%; }
-  thead th { background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; padding: 10px 14px; text-align: left; text-transform: uppercase; white-space: nowrap; }
+  thead th { background: var(--surface); color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; padding: 10px 12px; text-align: left; text-transform: uppercase; white-space: nowrap; }
   tbody tr { border-top: 1px solid var(--border); }
   tbody tr:hover { background: rgba(255,255,255,.03); }
-  td { padding: 10px 14px; vertical-align: middle; white-space: nowrap; }
+  td { padding: 9px 12px; vertical-align: middle; white-space: nowrap; }
   .chip { border-radius: 4px; display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 7px; }
-  .chip-green  { background: rgba(52,211,153,.15); color: var(--green); }
-  .chip-muted  { background: rgba(255,255,255,.07); color: var(--muted); }
-  .chip-amber  { background: rgba(251,191,36,.15);  color: var(--amber); }
-  .attended-mark { color: var(--green); }
+  .chip-green { background: rgba(52,211,153,.15); color: var(--green); }
+  .chip-muted { background: rgba(255,255,255,.07); color: var(--muted); }
+  .chip-amber { background: rgba(251,191,36,.15); color: var(--amber); }
   .empty-msg { color: var(--muted); padding: 32px; text-align: center; }
 
   /* ── Live dot ── */
@@ -84,15 +109,43 @@
 
 <!-- DASHBOARD -->
 <div id="dashboard">
+
   <div class="topbar">
     <h1>WRN Admin · NCC Hyderabad</h1>
     <span class="topbar-meta" id="topbar-day">Loading…</span>
   </div>
 
-  <div class="stats-row" id="stats-row">
-    <div class="stat-card"><div class="stat-num" id="stat-registered">–</div><div class="stat-lbl">Registered</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-checked-in">–</div><div class="stat-lbl">Checked In Today</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-log-total">–</div><div class="stat-lbl">Total Check-ins</div></div>
+  <div class="stats-section">
+
+    <!-- Row 1: Primary stats -->
+    <div class="primary-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-registered">–</div>
+        <div class="stat-lbl">Registered</div>
+      </div>
+      <div class="stat-card accent-border">
+        <div class="stat-num" id="stat-checked-in">–</div>
+        <div class="stat-lbl">Checked In Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-log-total">–</div>
+        <div class="stat-lbl">Total Check-ins</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Scenario breakdown (text) -->
+    <div class="scenario-row">
+      <span class="sc-item">Registered – <strong id="stat-s1">–</strong></span>
+      <span style="margin:0 8px;opacity:.4;">·</span>
+      <span class="sc-item">Early walk-in – <strong id="stat-s2a">–</strong></span>
+      <span style="margin:0 8px;opacity:.4;">·</span>
+      <span class="sc-item">Missed day – <strong id="stat-s2b">–</strong></span>
+      <span style="margin:0 8px;opacity:.4;">·</span>
+      <span class="sc-item">Bonus visit – <strong id="stat-s2c">–</strong></span>
+      <span style="margin:0 8px;opacity:.4;">·</span>
+      <span class="sc-item">New walk-in – <strong id="stat-s3">–</strong></span>
+    </div>
+
   </div>
 
   <div class="tabs">
@@ -132,6 +185,7 @@
       </table>
     </div>
   </div>
+
 </div>
 
 <script>
@@ -148,9 +202,9 @@ const db = firebase.firestore();
 const EVENT_DATES = ['25 May','26 May','27 May','28 May','29 May','30 May'];
 const DAY_LABELS  = ['25th May','26th May','27th May','28th May','29th May','30th May'];
 
-let allRegistered = [];   // cached master rows for filtering + CSV
-let allLogRows    = [];   // cached log rows for CSV
-let unsubLog      = null; // live listener unsubscribe handle
+let allRegistered = [];
+let allLogRows    = [];
+let unsubLog      = null;
 let todayDayNum   = null;
 
 // ── PASSWORD CHECK ────────────────────────────────────────
@@ -166,7 +220,6 @@ async function checkPassword() {
     const snap = await db.collection('config').doc('event').get();
     const cfg  = snap.data() || {};
 
-    // Compute today's day number for topbar
     const override = cfg.test_day_override || 0;
     if (override >= 1 && override <= 6) {
       todayDayNum = override;
@@ -194,7 +247,7 @@ async function checkPassword() {
 }
 
 // ── DASHBOARD LOAD ────────────────────────────────────────
-async function loadDashboard() {
+function loadDashboard() {
   loadRegistered();
   startLogListener();
 }
@@ -238,12 +291,23 @@ function filterRegistered() {
   renderRegistered(filtered);
 }
 
+// ── STATS ─────────────────────────────────────────────────
 function updateStats() {
+  // Row 1 — primary
   document.getElementById('stat-registered').textContent = allRegistered.length;
   const checkedInToday = todayDayNum
     ? allRegistered.filter(r => (r.attended_days || []).includes(todayDayNum)).length
     : 0;
   document.getElementById('stat-checked-in').textContent = checkedInToday;
+  document.getElementById('stat-log-total').textContent  = allLogRows.length;
+
+  // Row 2 — scenario breakdown (real check-ins only, no test entries)
+  const realRows = allLogRows.filter(r => !r.test_mode);
+  document.getElementById('stat-s1').textContent  = realRows.filter(r => r.scenario === 'outcome1').length;
+  document.getElementById('stat-s2a').textContent = realRows.filter(r => r.scenario === 'outcome2a').length;
+  document.getElementById('stat-s2b').textContent = realRows.filter(r => r.scenario === 'outcome2b').length;
+  document.getElementById('stat-s2c').textContent = realRows.filter(r => r.scenario === 'outcome2c').length;
+  document.getElementById('stat-s3').textContent  = realRows.filter(r => r.scenario === 'outcome3').length;
 }
 
 // ── ATTENDANCE LOG TAB (live) ─────────────────────────────
@@ -254,7 +318,7 @@ function startLogListener() {
     .onSnapshot(snap => {
       allLogRows = snap.docs.map(doc => doc.data());
       renderLog(allLogRows);
-      document.getElementById('stat-log-total').textContent = allLogRows.length;
+      updateStats();
     });
 }
 
@@ -299,7 +363,7 @@ function downloadCSV(type) {
   let headers, rows;
   if (type === 'registered') {
     headers = ['Name','Phone','Registered Days','Day 1','Day 2','Day 3','Day 4','Day 5','Day 6'];
-    const q  = document.getElementById('search-registered').value.toLowerCase().trim();
+    const q   = document.getElementById('search-registered').value.toLowerCase().trim();
     const src = q ? allRegistered.filter(r =>
       (r.name||'').toLowerCase().includes(q) || (r.phone||'').includes(q)) : allRegistered;
     rows = src.map(r => {
