@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WRN Admin — NCC Hyderabad</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,14 +16,14 @@
   }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; min-height: 100vh; }
 
-  /* ── Password gate ── */
+  /* ── Login gate ── */
   #gate { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
   .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 360px; text-align: center; }
   .gate-card h1 { font-size: 20px; margin-bottom: 8px; }
   .gate-card p  { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
-  .gate-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px 14px; outline: none; }
+  .gate-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 16px; padding: 12px 14px; outline: none; margin-bottom: 10px; }
   .gate-input:focus { border-color: var(--accent); }
-  .gate-btn { margin-top: 12px; width: 100%; background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px; }
+  .gate-btn { margin-top: 2px; width: 100%; background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px; }
   .gate-btn:hover { opacity: .9; }
   .gate-error { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 18px; }
 
@@ -33,6 +34,8 @@
   .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .topbar h1 { font-size: 15px; font-weight: 700; }
   .topbar-meta { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .signout-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 12px; padding: 5px 10px; }
+  .signout-btn:hover { border-color: var(--red); color: var(--red); }
 
   /* ── Stats ── */
   .stats-section { padding: 16px 16px 4px; }
@@ -96,13 +99,14 @@
 </head>
 <body>
 
-<!-- PASSWORD GATE -->
+<!-- LOGIN GATE -->
 <div id="gate">
   <div class="gate-card">
     <h1>WRN Admin</h1>
     <p>Women's Revival Nights · NCC Hyderabad</p>
-    <input class="gate-input" id="pw-input" type="password" placeholder="Enter admin password" autocomplete="current-password">
-    <button class="gate-btn" id="pw-btn" onclick="checkPassword()">Unlock Dashboard</button>
+    <input class="gate-input" id="email-input" type="email" placeholder="Admin email" autocomplete="username">
+    <input class="gate-input" id="pw-input" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="gate-btn" id="pw-btn" onclick="signIn()">Unlock Dashboard</button>
     <div class="gate-error" id="pw-error"></div>
   </div>
 </div>
@@ -113,6 +117,7 @@
   <div class="topbar">
     <h1>WRN Admin · NCC Hyderabad</h1>
     <span class="topbar-meta" id="topbar-day">Loading…</span>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
   </div>
 
   <div class="stats-section">
@@ -197,7 +202,8 @@ firebase.initializeApp({
   messagingSenderId: "264899728274",
   appId:             "1:264899728274:web:8f596a4e04e28eadbca74b",
 });
-const db = firebase.firestore();
+const db   = firebase.firestore();
+const auth = firebase.auth();
 
 const EVENT_DATES = ['25 May','26 May','27 May','28 May','29 May','30 May'];
 const DAY_LABELS  = ['25th May','26th May','27th May','28th May','29th May','30th May'];
@@ -207,44 +213,72 @@ let allLogRows    = [];
 let unsubLog      = null;
 let todayDayNum   = null;
 
-// ── PASSWORD CHECK ────────────────────────────────────────
+// ── LOGIN ─────────────────────────────────────────────────
 document.getElementById('pw-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') checkPassword();
+  if (e.key === 'Enter') signIn();
+});
+document.getElementById('email-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pw-input').focus();
 });
 
-async function checkPassword() {
-  const btn = document.getElementById('pw-btn');
-  btn.disabled = true; btn.textContent = 'Checking…';
-  const entered = document.getElementById('pw-input').value.trim();
+async function signIn() {
+  const btn   = document.getElementById('pw-btn');
+  const email = document.getElementById('email-input').value.trim();
+  const pw    = document.getElementById('pw-input').value;
+  document.getElementById('pw-error').textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in…';
+
   try {
-    const snap = await db.collection('config').doc('event').get();
-    const cfg  = snap.data() || {};
-
-    const override = cfg.test_day_override || 0;
-    if (override >= 1 && override <= 6) {
-      todayDayNum = override;
-    } else {
-      const nowIST   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const startIST = new Date(new Date('2026-05-25T00:00:00+05:30').toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const diff     = Math.floor((nowIST - startIST) / 86400000);
-      todayDayNum    = (diff >= 0 && diff < 6) ? diff + 1 : null;
-    }
-
-    if (entered === cfg.admin_password) {
-      document.getElementById('gate').style.display      = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      const dayLabel = todayDayNum ? `Day ${todayDayNum} · ${EVENT_DATES[todayDayNum - 1]}` : 'Outside event window';
-      document.getElementById('topbar-day').textContent  = (cfg.test_day_override ? '🧪 TEST · ' : '') + dayLabel;
-      loadDashboard();
-    } else {
-      document.getElementById('pw-error').textContent = 'Incorrect password.';
-      btn.disabled = false; btn.textContent = 'Unlock Dashboard';
-    }
-  } catch(e) {
-    document.getElementById('pw-error').textContent = 'Could not connect to Firebase.';
+    await auth.signInWithEmailAndPassword(email, pw);
+    // auth.onAuthStateChanged will handle the rest
+  } catch (e) {
+    const msg = e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'
+      ? 'Incorrect email or password.'
+      : 'Sign-in failed. Check your connection.';
+    document.getElementById('pw-error').textContent = msg;
     btn.disabled = false; btn.textContent = 'Unlock Dashboard';
   }
 }
+
+async function signOut() {
+  if (unsubLog) { unsubLog(); unsubLog = null; }
+  await auth.signOut();
+}
+
+// ── AUTH STATE ────────────────────────────────────────────
+auth.onAuthStateChanged(async user => {
+  if (user) {
+    // Signed in — load config then show dashboard
+    try {
+      const snap = await db.collection('config').doc('event').get();
+      const cfg  = snap.data() || {};
+      const override = cfg.test_day_override || 0;
+      if (override >= 1 && override <= 6) {
+        todayDayNum = override;
+      } else {
+        const nowIST   = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const startIST = new Date(new Date('2026-05-25T00:00:00+05:30').toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const diff     = Math.floor((nowIST - startIST) / 86400000);
+        todayDayNum    = (diff >= 0 && diff < 6) ? diff + 1 : null;
+      }
+      const dayLabel = todayDayNum ? `Day ${todayDayNum} · ${EVENT_DATES[todayDayNum - 1]}` : 'Outside event window';
+      document.getElementById('topbar-day').textContent = (cfg.test_day_override ? '🧪 TEST · ' : '') + dayLabel;
+    } catch (_) {
+      document.getElementById('topbar-day').textContent = 'Config unavailable';
+    }
+    document.getElementById('gate').style.display      = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    // Reset button state in case user navigates back
+    document.getElementById('pw-btn').disabled = false;
+    document.getElementById('pw-btn').textContent = 'Unlock Dashboard';
+    loadDashboard();
+  } else {
+    // Signed out — show gate, clear dashboard data
+    document.getElementById('gate').style.display      = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    allRegistered = []; allLogRows = []; todayDayNum = null;
+  }
+});
 
 // ── DASHBOARD LOAD ────────────────────────────────────────
 function loadDashboard() {
@@ -293,7 +327,6 @@ function filterRegistered() {
 
 // ── STATS ─────────────────────────────────────────────────
 function updateStats() {
-  // Row 1 — primary
   document.getElementById('stat-registered').textContent = allRegistered.length;
   const checkedInToday = todayDayNum
     ? allRegistered.filter(r => (r.attended_days || []).includes(todayDayNum)).length
@@ -301,7 +334,6 @@ function updateStats() {
   document.getElementById('stat-checked-in').textContent = checkedInToday;
   document.getElementById('stat-log-total').textContent  = allLogRows.length;
 
-  // Row 2 — scenario breakdown (real check-ins only, no test entries)
   const realRows = allLogRows.filter(r => !r.test_mode);
   document.getElementById('stat-s1').textContent  = realRows.filter(r => r.scenario === 'outcome1').length;
   document.getElementById('stat-s2a').textContent = realRows.filter(r => r.scenario === 'outcome2a').length;
