@@ -150,16 +150,24 @@
   }
 
   /* ── Desk login gate ── */
-  #desk-gate { position: fixed; inset: 0; background: #0f0f10; display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 999; }
+  #desk-gate { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 999; }
+  #desk-gate::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 0%, rgba(232,146,10,0.18) 0%, transparent 70%), radial-gradient(ellipse at 10% 100%, rgba(107,26,26,0.25) 0%, transparent 60%); pointer-events: none; }
   #desk-gate.hidden { display: none; }
-  .dg-card { background: #1a1a1e; border: 1px solid #2e2e36; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 340px; text-align: center; }
-  .dg-card h2 { font-size: 19px; font-weight: 700; color: #f0f0f2; margin-bottom: 6px; }
-  .dg-card p  { font-size: 13px; color: #8a8a9a; margin-bottom: 24px; }
-  .dg-input { width: 100%; background: #0f0f10; border: 1px solid #2e2e36; border-radius: 8px; color: #f0f0f2; font-size: 16px; padding: 12px 14px; outline: none; margin-bottom: 10px; }
-  .dg-input:focus { border-color: #7c6af7; }
-  .dg-btn { width: 100%; background: #7c6af7; border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px; margin-top: 2px; }
-  .dg-btn:hover { opacity: .9; }
-  .dg-error { color: #f87171; font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .dg-card { position: relative; z-index: 1; background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 36px 32px 32px; width: 100%; max-width: 360px; text-align: center; box-shadow: var(--shadow); }
+  .dg-church { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .dg-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--text-primary); line-height: 1.15; margin-bottom: 4px; }
+  .dg-sub { font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+  .dg-dates { font-size: 10px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--border); margin-bottom: 28px; }
+  .dg-divider { border: none; border-top: 1px solid var(--border-light); margin: 0 0 24px; }
+  .dg-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; text-align: left; }
+  .dg-input { width: 100%; height: 50px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text-primary); background: var(--off-white); padding: 0 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; margin-bottom: 14px; }
+  .dg-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,146,10,0.12); background: var(--white); }
+  .dg-input::placeholder { color: var(--border); }
+  .dg-btn { width: 100%; height: 52px; border-radius: var(--radius-sm); border: none; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; background: var(--gold); color: var(--dark); letter-spacing: 0.02em; transition: all 0.15s; margin-top: 4px; }
+  .dg-btn:hover { background: var(--gold-muted); }
+  .dg-btn:active { transform: scale(0.98); }
+  .dg-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .dg-error { color: var(--danger-text); font-size: 12px; margin-top: 10px; min-height: 16px; }
 </style>
 <!-- Firebase SDK (compat build — works with existing JS style) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -171,10 +179,15 @@
 <!-- DESK LOGIN GATE -->
 <div id="desk-gate">
   <div class="dg-card">
-    <h2>WRN Check-in Desk</h2>
-    <p>Women's Revival Nights · NCC Hyderabad</p>
-    <input class="dg-input" id="dg-email" type="email" placeholder="Desk email" autocomplete="username">
-    <input class="dg-input" id="dg-pw" type="password" placeholder="Password" autocomplete="current-password">
+    <div class="dg-church">NCC Hyderabad</div>
+    <div class="dg-title">Women's Revival Nights</div>
+    <div class="dg-sub">Check-in Desk</div>
+    <div class="dg-dates">25th–30th May 2026</div>
+    <hr class="dg-divider">
+    <label class="dg-label" for="dg-email">Email</label>
+    <input class="dg-input" id="dg-email" type="email" placeholder="desk@wrn.ncc" autocomplete="username">
+    <label class="dg-label" for="dg-pw">Password</label>
+    <input class="dg-input" id="dg-pw" type="password" placeholder="••••••••" autocomplete="current-password">
     <button class="dg-btn" id="dg-btn" onclick="deskSignIn()">Open Check-in</button>
     <div class="dg-error" id="dg-error"></div>
   </div>
