@@ -148,12 +148,38 @@
     .main { padding: 32px 24px 48px; }
     .form-input { font-size: 24px; height: 60px; }
   }
+
+  /* ── Desk login gate ── */
+  #desk-gate { position: fixed; inset: 0; background: #0f0f10; display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 999; }
+  #desk-gate.hidden { display: none; }
+  .dg-card { background: #1a1a1e; border: 1px solid #2e2e36; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 340px; text-align: center; }
+  .dg-card h2 { font-size: 19px; font-weight: 700; color: #f0f0f2; margin-bottom: 6px; }
+  .dg-card p  { font-size: 13px; color: #8a8a9a; margin-bottom: 24px; }
+  .dg-input { width: 100%; background: #0f0f10; border: 1px solid #2e2e36; border-radius: 8px; color: #f0f0f2; font-size: 16px; padding: 12px 14px; outline: none; margin-bottom: 10px; }
+  .dg-input:focus { border-color: #7c6af7; }
+  .dg-btn { width: 100%; background: #7c6af7; border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px; margin-top: 2px; }
+  .dg-btn:hover { opacity: .9; }
+  .dg-error { color: #f87171; font-size: 13px; margin-top: 10px; min-height: 18px; }
 </style>
 <!-- Firebase SDK (compat build — works with existing JS style) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
+
+<!-- DESK LOGIN GATE -->
+<div id="desk-gate">
+  <div class="dg-card">
+    <h2>WRN Check-in Desk</h2>
+    <p>Women's Revival Nights · NCC Hyderabad</p>
+    <input class="dg-input" id="dg-email" type="email" placeholder="Desk email" autocomplete="username">
+    <input class="dg-input" id="dg-pw" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="dg-btn" id="dg-btn" onclick="deskSignIn()">Open Check-in</button>
+    <div class="dg-error" id="dg-error"></div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- BANNER -->
@@ -398,7 +424,8 @@ firebase.initializeApp({
   messagingSenderId: "264899728274",
   appId:             "1:264899728274:web:8f596a4e04e28eadbca74b",
 });
-const db = firebase.firestore();
+const db   = firebase.firestore();
+const auth = firebase.auth();
 
 // ─── CONSTANTS ────────────────────────────────────────────
 const EVENT_DATES      = ['25 May','26 May','27 May','28 May','29 May','30 May'];
@@ -414,13 +441,46 @@ let state = {
   currentLookup:  null,
 };
 
-// ─── INIT ─────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  initToday();
-  const phoneInput = document.getElementById('phone-input');
-  phoneInput.addEventListener('keydown', e => {
+// ─── DESK LOGIN ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('dg-email').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('dg-pw').focus();
+  });
+  document.getElementById('dg-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') deskSignIn();
+  });
+  document.getElementById('phone-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLookup();
   });
+});
+
+async function deskSignIn() {
+  const btn   = document.getElementById('dg-btn');
+  const email = document.getElementById('dg-email').value.trim();
+  const pw    = document.getElementById('dg-pw').value;
+  document.getElementById('dg-error').textContent = '';
+  btn.disabled = true; btn.textContent = 'Opening…';
+  try {
+    await auth.signInWithEmailAndPassword(email, pw);
+  } catch (e) {
+    const msg = (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found')
+      ? 'Incorrect email or password.'
+      : 'Sign-in failed. Check your connection.';
+    document.getElementById('dg-error').textContent = msg;
+    btn.disabled = false; btn.textContent = 'Open Check-in';
+  }
+}
+
+// ─── AUTH STATE ───────────────────────────────────────────
+auth.onAuthStateChanged(user => {
+  if (user) {
+    document.getElementById('desk-gate').classList.add('hidden');
+    document.getElementById('dg-btn').disabled = false;
+    document.getElementById('dg-btn').textContent = 'Open Check-in';
+    initToday();
+  } else {
+    document.getElementById('desk-gate').classList.remove('hidden');
+  }
 });
 
 async function initToday() {

@@ -2,26 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Config — read-only; admin_password lives here but cannot be hidden
-    // without Firebase Auth. Acceptable for a 6-day church event.
+    // Config — must stay publicly readable; check-in app reads test_day_override without auth.
     match /config/{doc} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Master — readable for lookup; writable only until event ends.
-    // The import script and check-in app both need full write access here;
-    // they cannot be distinguished without Firebase Auth.
+    // Master — requires auth to read; write allowed pre-event for the Apps Script morning import.
     match /master/{phone} {
-      allow read: if true;
-      allow write: if request.time < timestamp.date(2026, 6, 1);
+      allow read: if request.auth != null;
+      allow write: if request.auth != null || request.time < timestamp.date(2026, 6, 1);
     }
 
-    // Attendance log — create-only (audit trail cannot be deleted or edited).
-    // Also expires after the event so no post-event spam is possible.
+    // Attendance log — requires auth to read; create allowed until event ends.
     match /attendance_log/{doc} {
-      allow read: if true;
-      allow create: if request.time < timestamp.date(2026, 6, 1);
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.time < timestamp.date(2026, 6, 1);
       allow update, delete: if false;
     }
   }
