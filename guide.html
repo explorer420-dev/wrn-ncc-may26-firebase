@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organiser Guide — WRN Check-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #e8920a; --gold-bright: #f5c518; --gold-light: #fdf3dc; --gold-muted: #c47a08;
+    --dark: #120800; --white: #ffffff; --off-white: #fdf8f2;
+    --text-primary: #120800; --text-secondary: #5a3e28; --text-muted: #9a7a5a;
+    --border: #e8d5b8; --border-light: #f2e8d8;
+    --success-bg: #f0faf4; --success-border: #4caf80; --success-text: #1a5c38;
+    --radius: 16px; --radius-sm: 10px; --shadow: 0 4px 24px rgba(18,8,0,0.08);
+  }
+  body { background: var(--off-white); color: var(--text-primary); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.7; }
+
+  /* ── Header ── */
+  .header { background: var(--dark); padding: 32px 24px 28px; position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 0%, rgba(232,146,10,0.18) 0%, transparent 70%), radial-gradient(ellipse at 10% 100%, rgba(107,26,26,0.25) 0%, transparent 60%); pointer-events: none; }
+  .header-inner { max-width: 780px; margin: 0 auto; position: relative; z-index: 1; }
+  .header-label { font-size: 10px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: var(--gold-bright); line-height: 1.1; margin-bottom: 6px; }
+  .header-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
+
+  /* ── Layout ── */
+  .page { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 48px; }
+  .section-num { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-muted); margin-bottom: 6px; }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; }
+
+  /* ── Card ── */
+  .card { background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 14px; }
+
+  /* ── Steps ── */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; display: flex; gap: 16px; margin-bottom: 14px; align-items: flex-start; }
+  .steps li::before { content: counter(step); display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; min-width: 26px; border-radius: 50%; background: var(--gold-light); border: 1.5px solid var(--gold); color: var(--gold-muted); font-size: 12px; font-weight: 700; margin-top: 1px; }
+  .steps li p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+  .steps li strong { color: var(--text-primary); }
+
+  /* ── Checklist ── */
+  .checklist { list-style: none; }
+  .checklist li { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border-light); font-size: 14px; color: var(--text-secondary); }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { content: '☐'; font-size: 16px; color: var(--gold-muted); flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-light); margin-top: 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead th { background: var(--gold-light); color: var(--gold-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 14px; text-align: left; white-space: nowrap; }
+  tbody tr { border-top: 1px solid var(--border-light); }
+  tbody tr:hover { background: var(--off-white); }
+  td { padding: 10px 14px; vertical-align: top; color: var(--text-secondary); line-height: 1.5; }
+  td:first-child { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+
+  /* ── Scenario chips ── */
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 20px; }
+  .chip-green  { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .chip-amber  { background: #fffbeb; color: #854d0e; border: 1px solid #f59e0b; }
+  .chip-blue   { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+  .chip-muted  { background: var(--off-white); color: var(--text-muted); border: 1px solid var(--border); }
+
+  /* ── Alert box ── */
+  .alert { border-radius: var(--radius-sm); padding: 14px 18px; font-size: 13px; line-height: 1.6; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+  .alert-icon { font-size: 18px; flex-shrink: 0; }
+  .alert-gold { background: var(--gold-light); border: 1px solid var(--border); color: var(--text-secondary); }
+  .alert-green { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); }
+
+  /* ── Code ── */
+  code { background: var(--off-white); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text-secondary); }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border-light); margin: 48px 0; }
+
+  /* ── TOC ── */
+  .toc { background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 48px; box-shadow: var(--shadow); }
+  .toc-title { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc ol li { counter-increment: toc; font-size: 14px; padding: 4px 0; }
+  .toc ol li a { color: var(--gold-muted); text-decoration: none; font-weight: 500; }
+  .toc ol li a:hover { color: var(--gold); }
+  .toc ol li::before { content: counter(toc) ". "; color: var(--border); font-size: 12px; }
+
+  @media (max-width: 600px) {
+    .header-title { font-size: 24px; }
+    .page { padding: 28px 16px 60px; }
+    .card { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-label">Women's Revival Nights · NCC Hyderabad</div>
+    <div class="header-title">Organiser Guide</div>
+    <div class="header-sub">Everything you need to manage the check-in system before and during the event</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#s1">Before the Event — Importing Attendee Data</a></li>
+      <li><a href="#s2">Event Day — Desk Check-in</a></li>
+      <li><a href="#s3">Event Day — Admin Dashboard</a></li>
+      <li><a href="#s4">Check-in Scenarios Explained</a></li>
+      <li><a href="#s5">Exporting Data</a></li>
+      <li><a href="#s6">Troubleshooting</a></li>
+    </ol>
+  </div>
+
+  <!-- S1: Import -->
+  <div class="section" id="s1">
+    <div class="section-num">Section 1</div>
+    <div class="section-title">Before the Event — Importing Attendee Data</div>
+
+    <div class="alert alert-gold">
+      <span class="alert-icon">📋</span>
+      <div>The master attendee list lives in a Google Sheet. Every morning before the event opens, run the import to push the latest registrations into the system.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Google Sheet Format</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Column</th><th>Field Name</th><th>Example</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>Name</td><td>Priya Sharma</td><td>Full name as registered</td></tr>
+            <tr><td>B</td><td>Phone</td><td>9876543210</td><td>10-digit mobile, no spaces or +91</td></tr>
+            <tr><td>C</td><td>Day 1</td><td>TRUE</td><td>TRUE if registered for this day</td></tr>
+            <tr><td>D</td><td>Day 2</td><td>FALSE</td><td>One column per event day</td></tr>
+            <tr><td>E–H</td><td>Day 3–6</td><td>…</td><td>Same pattern</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Running the Import</div>
+      <ol class="steps">
+        <li><p>Open the <strong>Google Sheet</strong> that has the registration data.</p></li>
+        <li><p>In the menu bar click <strong>Extensions → Apps Script</strong>.</p></li>
+        <li><p>Select the <strong>importToFirestore</strong> function from the dropdown at the top.</p></li>
+        <li><p>Click <strong>Run</strong> (▶). Approve permissions if prompted (first time only).</p></li>
+        <li><p>Wait for the execution log to show <strong>"Import complete"</strong>. This typically takes 1–2 minutes for a few hundred rows.</p></li>
+        <li><p>Verify in <strong>admin.html → Registered tab</strong> that the count matches your sheet.</p></li>
+      </ol>
+    </div>
+
+    <div class="alert alert-gold">
+      <span class="alert-icon">⏰</span>
+      <div><strong>When to run:</strong> Once each morning before the venue opens. If late registrations come in during the day, re-run the import — it is safe to run multiple times, existing attendance records are not overwritten.</div>
+    </div>
+  </div>
+
+  <!-- S2: Desk -->
+  <div class="section" id="s2">
+    <div class="section-num">Section 2</div>
+    <div class="section-title">Event Day — Desk Check-in</div>
+
+    <div class="card">
+      <div class="card-title">Opening the App</div>
+      <ol class="steps">
+        <li><p>Open <strong>index.html</strong> in the browser on the check-in device.</p></li>
+        <li><p>Sign in with the <strong>desk credentials</strong> (email + password shared by the admin).</p></li>
+        <li><p>The app loads the current event day automatically. Confirm the day shown in the banner is correct.</p></li>
+        <li><p>You're ready. The phone number field is focused and ready for input.</p></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Checking In an Attendee</div>
+      <ol class="steps">
+        <li><p>Ask the attendee for their <strong>registered mobile number</strong>.</p></li>
+        <li><p>Type the 10-digit number — the app looks up the record as you type.</p></li>
+        <li><p>The screen shows the attendee's name and check-in status. <strong>Confirm with the attendee</strong> that the name matches.</p></li>
+        <li><p>Press <strong>Confirm Check-in</strong>. The screen briefly shows a success confirmation, then resets for the next attendee.</p></li>
+      </ol>
+    </div>
+
+    <div class="alert alert-green">
+      <span class="alert-icon">✓</span>
+      <div>The app resets automatically after each check-in. No need to press back or refresh.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Day-of Checklist</div>
+      <ul class="checklist">
+        <li>Device is charged / plugged in</li>
+        <li>Stable internet connection confirmed</li>
+        <li>Import has been run this morning</li>
+        <li>Desk credentials available (email + password)</li>
+        <li>Correct day shown in the app banner</li>
+        <li>Walk-in payment process confirmed with team</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- S3: Admin -->
+  <div class="section" id="s3">
+    <div class="section-num">Section 3</div>
+    <div class="section-title">Event Day — Admin Dashboard</div>
+
+    <div class="card">
+      <div class="card-title">Accessing the Dashboard</div>
+      <ol class="steps">
+        <li><p>Open <strong>admin.html</strong> on the admin device.</p></li>
+        <li><p>Sign in with the <strong>admin credentials</strong> (separate from the desk credentials).</p></li>
+        <li><p>The dashboard loads with live statistics and two data tabs.</p></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Dashboard Stats</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Stat</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td>Registered</td><td>Total number of people in the master list</td></tr>
+            <tr><td>Checked In Today</td><td>People who have checked in on today's day specifically</td></tr>
+            <tr><td>Total Check-ins</td><td>Cumulative check-ins across all days (including walk-ins)</td></tr>
+            <tr><td>Registered</td><td>Registered attendees checking in on their registered day</td></tr>
+            <tr><td>Early walk-in</td><td>Registered attendee attending a day they didn't register for (before their days)</td></tr>
+            <tr><td>Missed day</td><td>Registered attendee who missed a previous day and is back</td></tr>
+            <tr><td>Bonus visit</td><td>Registered attendee who has already completed all their days</td></tr>
+            <tr><td>New walk-in</td><td>Not in the registry — new walk-in attendee</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Registered Tab</div>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Shows every person in the master list with their registered days and attendance status per day.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Chip</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip chip-green">✓</span></td><td>Attended this day</td></tr>
+            <tr><td><span class="chip chip-amber">Reg</span></td><td>Registered for this day but not yet attended</td></tr>
+            <tr><td><span class="chip chip-muted">—</span></td><td>Not registered for this day</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Attendance Log Tab</div>
+      <p style="font-size:14px;color:var(--text-secondary);">Updates in real time — every check-in appears here within seconds. Each row shows the time, name, phone, day number, scenario, and payment flag. TEST entries (from test mode) are tagged separately.</p>
+    </div>
+  </div>
+
+  <!-- S4: Scenarios -->
+  <div class="section" id="s4">
+    <div class="section-num">Section 4</div>
+    <div class="section-title">Check-in Scenarios Explained</div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>What the app shows</th><th>Situation</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="chip chip-green">Registered</span></td>
+              <td>Attendee is in the list and today is one of their registered days</td>
+              <td>Confirm check-in normally</td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-blue">Early walk-in</span></td>
+              <td>Registered, but today isn't one of their selected days — attending earlier</td>
+              <td>Welcome them, confirm check-in</td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-amber">Missed day</span></td>
+              <td>Registered, missed a previous session, attending today</td>
+              <td>Confirm check-in normally</td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-amber">Bonus visit</span></td>
+              <td>Has already attended all their registered days — returning extra</td>
+              <td>Confirm check-in, mark as bonus</td>
+            </tr>
+            <tr>
+              <td><span class="chip chip-muted">New walk-in</span></td>
+              <td>Phone not found in the registry</td>
+              <td>Collect name + payment if applicable, confirm to add them</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: Export -->
+  <div class="section" id="s5">
+    <div class="section-num">Section 5</div>
+    <div class="section-title">Exporting Data</div>
+
+    <div class="card">
+      <ol class="steps">
+        <li><p>Open <strong>admin.html</strong> and sign in.</p></li>
+        <li><p>Go to the tab you want to export — <strong>Registered</strong> or <strong>Attendance Log</strong>.</p></li>
+        <li><p>Optionally use the <strong>search box</strong> to filter before exporting (only filtered rows are exported).</p></li>
+        <li><p>Click <strong>⬇ Download CSV</strong>. The file downloads immediately to your device.</p></li>
+        <li><p>Open in Excel or Google Sheets for further analysis.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- S6: Troubleshooting -->
+  <div class="section" id="s6">
+    <div class="section-num">Section 6</div>
+    <div class="section-title">Troubleshooting</div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Problem</th><th>Likely cause</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Login page won't proceed</td>
+              <td>Wrong credentials or no internet</td>
+              <td>Check credentials with admin; check network connection</td>
+            </tr>
+            <tr>
+              <td>Attendee not found</td>
+              <td>Phone number not in master, or import not run today</td>
+              <td>Check the number carefully; re-run import if registrations came in after last import</td>
+            </tr>
+            <tr>
+              <td>Dashboard shows old data</td>
+              <td>Import not run yet today</td>
+              <td>Run the Apps Script import from Google Sheets</td>
+            </tr>
+            <tr>
+              <td>App shows wrong day</td>
+              <td>Real date outside event window, or override set incorrectly</td>
+              <td>Check <code>test_day_override</code> in Firestore config/event; set to 0 for real date</td>
+            </tr>
+            <tr>
+              <td>Check-in not appearing in log</td>
+              <td>Network dropped mid-check-in</td>
+              <td>Check internet; retry the check-in (duplicate protection is built in)</td>
+            </tr>
+            <tr>
+              <td>Page auto-logs in as wrong user</td>
+              <td>Browser session from a different device/user</td>
+              <td>Click Sign out (if visible) or open in an incognito/private window</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert alert-gold">
+      <span class="alert-icon">📞</span>
+      <div>For issues not covered here, contact the system administrator with a screenshot of the error and the approximate time it occurred.</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
